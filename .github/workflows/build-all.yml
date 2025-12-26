@@ -1,0 +1,125 @@
+name: Build All Apps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Desktop-Windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: packages/desktop
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install Dependencies
+        run: yarn install --immutable
+      
+      - name: Rebuild Electron Native Modules
+        run: yarn workspace @standardnotes/desktop rebuild:home-server
+
+      - name: Build JS
+        run: yarn build:desktop
+
+      - name: Webpack
+        run: yarn run webpack --config desktop.webpack.prod.js
+
+      - name: Build & Package (Windows)
+        # Using no-sign.js to bypass the custom DigiCert signing script
+        run: yarn run electron-builder --windows --x64 --publish=never --c.win.sign=./scripts/no-sign.js
+      
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows
+          path: |
+            packages/desktop/dist/*.exe
+            packages/desktop/dist/*.blockmap
+
+  Desktop-Linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/desktop
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install FPM
+        run: sudo gem install fpm -f
+
+      - name: Install Dependencies
+        run: yarn install --immutable
+      
+      - name: Rebuild Electron Native Modules
+        run: yarn workspace @standardnotes/desktop rebuild:home-server
+
+      - name: Build JS
+        run: yarn build:desktop
+
+      - name: Webpack
+        run: yarn run webpack --config desktop.webpack.prod.js
+
+      - name: Build & Package (AppImage)
+        run: yarn run electron-builder --linux --x64 -c.linux.target=AppImage --publish=never
+      
+      - name: Build & Package (Deb)
+        run: yarn run electron-builder --linux --x64 -c.linux.target=deb --publish=never
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-linux
+          path: |
+            packages/desktop/dist/*.AppImage
+            packages/desktop/dist/*.deb
+
+  Mobile-Android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/mobile
+    env:
+      ANDROID_KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
+      ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
+      - name: Install Dependencies
+        run: yarn install --immutable
+      
+      - name: Build Mobile JS Bundle
+        # Uses the build script from packages/mobile/package.json
+        run: yarn build:mobile
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.keystore
+      
+      - name: Build Android Release APK
+        working-directory: packages/mobile/android
+        run: ./gradlew assembleRelease
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-android
+          path: packages/mobile/android/app/build/outputs/apk/prod/release/*.apk
