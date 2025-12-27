@@ -201,7 +201,12 @@ jobs:
           cd android/app
           
           echo "Modifying build.gradle..."
-          sed -i -e '/detox/Id' -e '/gms/d' -e "s/versionName appVersionName/versionName \"$VERSION\"/" -e "s/versionCode appVersionCode/versionCode $VERCODE/" -e '/universalApk/s/false/true/' build.gradle
+          # Fix signing config: Remove the DETOX_CI check so it always uses signingConfigs.release
+          sed -i -e "s/System.getenv('DETOX_CI') ? signingConfigs.debug : //" build.gradle
+          # Remove Detox dependencies and proguard rules specifically
+          sed -i -e '/com.wix:detox/d' -e '/detox\/proguard-rules-app.pro/d' build.gradle
+          # Remove GMS and update versions
+          sed -i -e '/gms/d' -e "s/versionName appVersionName/versionName \"$VERSION\"/" -e "s/versionCode appVersionCode/versionCode $VERCODE/" -e '/universalApk/s/false/true/' build.gradle
           
           echo "Removing Fido2Api..."
           rm -f src/main/java/com/standardnotes/Fido2Api*.java
