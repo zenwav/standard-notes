@@ -18,11 +18,6 @@ on:
         required: true
         type: boolean
         default: true
-      version:
-        description: 'Version (e.g., 3.190.0)'
-        required: true
-        type: string
-        default: '3.190.0'
 
 jobs:
   Desktop-Windows:
@@ -41,10 +36,6 @@ jobs:
         with:
           python-version: '3.10'
       
-      - name: Set Version
-        run: |
-          npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
-      
       - name: Install Dependencies
         run: yarn install --immutable
       
@@ -59,7 +50,8 @@ jobs:
 
       - name: Build & Package (Windows)
         # Using no-sign.js to bypass the custom DigiCert signing script
-        run: yarn run electron-builder --windows --x64 --publish=never --c.win.sign=./scripts/no-sign.js
+        # Version fetched dynamically from packages/web/package.json
+        run: yarn run electron-builder --windows --x64 --publish=never --c.win.sign=./scripts/no-sign.js --c.extraMetadata.version=$(node -p "require('./../web/package.json').version")
       
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
@@ -88,9 +80,11 @@ jobs:
       - name: Install FPM
         run: sudo gem install fpm -f
 
-      - name: Set Version
+      - name: Set Version from Web Package
         run: |
-          npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
+          APP_VERSION=$(node -p "require('./../web/package.json').version")
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+          npm version $APP_VERSION --no-git-tag-version --allow-same-version
 
       - name: Install Dependencies
         run: yarn install --immutable
@@ -121,6 +115,8 @@ jobs:
   Mobile-Android:
     if: ${{ inputs.build_android == true }}
     runs-on: ubuntu-latest
+    outputs:
+      fdroid_version: ${{ steps.fdroid_meta.outputs.fdroid_version }}
     defaults:
       run:
         working-directory: packages/mobile
@@ -136,6 +132,7 @@ jobs:
           java-version: '17'
       
       - name: F-Droid Preparation (Metadata & Patches)
+        id: fdroid_meta
         run: |
           # 1. Fetch F-Droid Data (Clone)
           echo "Cloning F-Droid data..."
@@ -149,6 +146,7 @@ jobs:
           VERSION=$(grep "CurrentVersion:" "$METADATA_FILE" | tail -n 1 | awk '{print $2}')
           VERCODE=$(grep "CurrentVersionCode:" "$METADATA_FILE" | tail -n 1 | awk '{print $2}')
           echo "FDROID_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "fdroid_version=$VERSION" >> $GITHUB_OUTPUT
           echo "FDROID_VERCODE=$VERCODE" >> $GITHUB_ENV
           echo "Using Version: $VERSION ($VERCODE)"
 
@@ -242,20 +240,50 @@ jobs:
     if: ${{ !cancelled() && !failure() }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+      
+      - name: Get Versions
+        id: versions
+        run: |
+          # 1. Desktop Version (from web/package.json)
+          D_VER=$(node -p "require('./packages/web/package.json').version")
+          echo "DESKTOP_VERSION=$D_VER" >> $GITHUB_ENV
+          
+          # 2. Android Version (from F-Droid output) - might be empty if skipped
+          A_VER="${{ needs.Mobile-Android.outputs.fdroid_version }}"
+          echo "ANDROID_VERSION=$A_VER" >> $GITHUB_ENV
+          
       - name: Determine Release Name
         id: names
         run: |
-          PLATFORM_NAME="Composite"
+          D_VER="${{ env.DESKTOP_VERSION }}"
+          A_VER="${{ env.ANDROID_VERSION }}"
+          
+          # Default fallback
+          RELEASE_TITLE="Release $D_VER"
+          TAG_NAME="v$D_VER"
+
           if [[ "${{ inputs.build_windows }}" == "true" && "${{ inputs.build_linux }}" == "true" && "${{ inputs.build_android }}" == "true" ]]; then
-            PLATFORM_NAME="All"
+            # Composite Build (All)
+            if [[ "$D_VER" == "$A_VER" ]]; then
+               RELEASE_TITLE="All - $D_VER"
+            else
+               RELEASE_TITLE="All - Desktop: $D_VER, Android: $A_VER"
+            fi
           elif [[ "${{ inputs.build_windows }}" == "true" && "${{ inputs.build_linux }}" == "false" && "${{ inputs.build_android }}" == "false" ]]; then
-            PLATFORM_NAME="Windows"
+            # Windows Only
+            RELEASE_TITLE="Windows - $D_VER"
           elif [[ "${{ inputs.build_windows }}" == "false" && "${{ inputs.build_linux }}" == "true" && "${{ inputs.build_android }}" == "false" ]]; then
-            PLATFORM_NAME="Linux"
+            # Linux Only
+            RELEASE_TITLE="Linux - $D_VER"
           elif [[ "${{ inputs.build_windows }}" == "false" && "${{ inputs.build_linux }}" == "false" && "${{ inputs.build_android }}" == "true" ]]; then
-            PLATFORM_NAME="Android"
+            # Android Only
+            RELEASE_TITLE="Android - $A_VER"
+            TAG_NAME="v$A_VER"
           fi
-          echo "RELEASE_NAME=$PLATFORM_NAME - ${{ inputs.version }}" >> $GITHUB_ENV
+          
+          echo "RELEASE_NAME=$RELEASE_TITLE" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4
@@ -266,7 +294,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ inputs.version }}
+          tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.RELEASE_NAME }}
           draft: false
           prerelease: false
