@@ -19,10 +19,10 @@ on:
         type: boolean
         default: true
       version:
-        description: 'Version (e.g., 3.198.4)'
+        description: 'Version (e.g., 3.190.0)'
         required: true
         type: string
-        default: '3.198.4'
+        default: '3.190.0'
 
 jobs:
   Desktop-Windows:
@@ -135,11 +135,71 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
+      - name: F-Droid Preparation (Metadata & Patches)
+        run: |
+          # 1. Fetch Metadata
+          echo "Fetching F-Droid metadata..."
+          curl -s https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/com.standardnotes.yml -o metadata.yml
+          VERSION=$(grep "CurrentVersion:" metadata.yml | head -n 1 | awk '{print $2}')
+          VERCODE=$(grep "CurrentVersionCode:" metadata.yml | head -n 1 | awk '{print $2}')
+          echo "FDROID_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "FDROID_VERCODE=$VERCODE" >> $GITHUB_ENV
+          echo "Using Version: $VERSION ($VERCODE)"
+
+          # 2. Modify package.json (Remove IAP/Store Review)
+          # We are in packages/mobile
+          echo "Removing dependencies from package.json..."
+          tmpfile=$(mktemp)
+          cp package.json "$tmpfile"
+          jq -r 'del(.devDependencies["react-native-iap"]) | del (.dependencies["react-native-store-review"])' "$tmpfile" > package.json
+          rm "$tmpfile"
+
+          # 3. Fetch and Apply Patches
+          echo "Fetching patches..."
+          # Fetch file list
+          FILES_JSON=$(curl -s "https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata/repository/tree?path=metadata/com.standardnotes")
+          # Extract patch filenames
+          PATCHES=$(echo "$FILES_JSON" | jq -r '.[] | select(.name | test("remove-IAP.*\\.patch|remove-react-native-store-review.*\\.patch")) | .name')
+          
+          # Go to root for patching
+          cd ../..
+          for patch in $PATCHES; do
+            echo "Applying $patch..."
+            curl -s "https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/com.standardnotes/$patch" -o "$patch"
+            # Try applying with git apply, fallback to patch
+            git apply --ignore-space-change --ignore-whitespace "$patch" || patch -p1 < "$patch"
+          done
+
       - name: Install Dependencies
-        run: yarn install --immutable
+        run: yarn install --no-immutable
       
+      - name: Apply F-Droid Hacks (Sed & Stripping)
+        run: |
+          VERSION=${{ env.FDROID_VERSION }}
+          VERCODE=${{ env.FDROID_VERCODE }}
+          
+          # We are in packages/mobile
+          cd android/app
+          
+          echo "Modifying build.gradle..."
+          sed -i -e '/detox/Id' -e '/gms/d' -e "s/versionName appVersionName/versionName \"$VERSION\"/" -e "s/versionCode appVersionCode/versionCode $VERCODE/" -e '/universalApk/s/false/true/' build.gradle
+          
+          echo "Removing Fido2Api..."
+          rm -f src/main/java/com/standardnotes/Fido2Api*.java
+          sed -i -e '/Fido2ApiPackage/d' src/main/java/com/standardnotes/MainApplication.kt
+          
+          echo "Patching Fingerprint Scanner..."
+          pushd ../../node_modules/react-native-fingerprint-scanner/android
+          sed -i -e '/FingerprintIdentify/d' build.gradle
+          sed -i -e '/getFingerprintIdentify() {/,/^    }/d' -e '/resumeIdentify/,/^    }/c}' -e '/legacyGetErrorMessage() {/,/^    }/d' -e 's/legacyGetErrorMessage()/"LegacyAndroid"/g' -e '/FingerprintIdentify/Id' src/main/java/com/hieuvp/fingerprint/ReactNativeFingerprintScannerModule.java
+          popd
+          
+          echo "Patching Web Source..."
+          cd ../../../..
+          # Now in root
+          sed -i -e 's/&& !isAndroid()//' packages/web/src/javascripts/Components/ChallengeModal/U2FPrompt.tsx
+
       - name: Build Mobile JS Bundle
-        # Uses the build script from packages/mobile/package.json
         run: yarn build:mobile
 
       - name: Decode Keystore
@@ -148,7 +208,7 @@ jobs:
       
       - name: Build Android Release APK
         working-directory: packages/mobile/android
-        run: ./gradlew assembleRelease -PversionName=${{ inputs.version }}
+        run: ./gradlew assembleRelease
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
