@@ -137,16 +137,22 @@ jobs:
       
       - name: F-Droid Preparation (Metadata & Patches)
         run: |
-          # 1. Fetch Metadata
-          echo "Fetching F-Droid metadata..."
-          curl -s https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/com.standardnotes.yml -o metadata.yml
-          VERSION=$(grep "CurrentVersion:" metadata.yml | tail -n 1 | awk '{print $2}')
-          VERCODE=$(grep "CurrentVersionCode:" metadata.yml | tail -n 1 | awk '{print $2}')
+          # 1. Fetch F-Droid Data (Clone)
+          echo "Cloning F-Droid data..."
+          git clone --depth 1 --filter=blob:none --sparse https://gitlab.com/fdroid/fdroiddata.git fdroid_temp
+          cd fdroid_temp
+          git sparse-checkout set metadata/com.standardnotes
+          cd ..
+          
+          # 2. Extract Metadata
+          METADATA_FILE="fdroid_temp/metadata/com.standardnotes.yml"
+          VERSION=$(grep "CurrentVersion:" "$METADATA_FILE" | tail -n 1 | awk '{print $2}')
+          VERCODE=$(grep "CurrentVersionCode:" "$METADATA_FILE" | tail -n 1 | awk '{print $2}')
           echo "FDROID_VERSION=$VERSION" >> $GITHUB_ENV
           echo "FDROID_VERCODE=$VERCODE" >> $GITHUB_ENV
           echo "Using Version: $VERSION ($VERCODE)"
 
-          # 2. Modify package.json (Remove IAP/Store Review)
+          # 3. Modify package.json (Remove IAP/Store Review)
           # We are in packages/mobile
           echo "Removing dependencies from package.json..."
           tmpfile=$(mktemp)
@@ -154,21 +160,36 @@ jobs:
           jq -r 'del(.devDependencies["react-native-iap"]) | del (.dependencies["react-native-store-review"])' "$tmpfile" > package.json
           rm "$tmpfile"
 
-          # 3. Fetch and Apply Patches
-          echo "Fetching patches..."
-          # Fetch file list
-          FILES_JSON=$(curl -s "https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata/repository/tree?path=metadata/com.standardnotes")
-          # Extract patch filenames
-          PATCHES=$(echo "$FILES_JSON" | jq -r '.[] | select(.name | test("remove-IAP.*\\.patch|remove-react-native-store-review.*\\.patch")) | .name')
-          
+          # 4. Apply Patches
+          echo "Finding and Applying patches..."
           # Go to root for patching
           cd ../..
-          for patch in $PATCHES; do
-            echo "Applying $patch..."
-            curl -s "https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/com.standardnotes/$patch" -o "$patch"
-            # Try applying with git apply, fallback to patch
-            git apply --ignore-space-change --ignore-whitespace "$patch" || patch -p1 < "$patch"
+          USER_WORKSPACE=$(pwd)
+          
+          # Find patches in the cloned directory (absolute path or relative to where we are)
+          # We need to look inside packages/mobile/fdroid_temp/metadata/com.standardnotes (since we cloned it inside packages/mobile)
+          PATCH_DIR="$USER_WORKSPACE/packages/mobile/fdroid_temp/metadata/com.standardnotes"
+          
+          # Find patches matching the simpler criteria
+          find "$PATCH_DIR" -name "remove-IAP*.patch" -o -name "remove-react-native-store-review*.patch" | while read patch_file; do
+            echo "Applying patch: $patch_file"
+            # Try applying with patch -p1 (usually correct for root-relative patches)
+            # F-Droid patches often strip 1 level if generated from root
+            if patch -p1 < "$patch_file"; then
+                echo "Successfully applied $patch_file"
+            else
+                echo "Failed to apply $patch_file with -p1, trying -p0"
+                if patch -p0 < "$patch_file"; then
+                     echo "Successfully applied $patch_file with -p0"
+                else
+                     echo "Error applying $patch_file"
+                     exit 1
+                fi
+            fi
           done
+
+          # Cleanup
+          rm -rf "$USER_WORKSPACE/packages/mobile/fdroid_temp"
 
       - name: Install Dependencies
         run: yarn install --no-immutable
