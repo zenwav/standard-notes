@@ -21,7 +21,7 @@ export class GetFeatureStatusUseCase {
 
     const nativeFeature = this.findNativeFeature(dto.featureId)
     if (!nativeFeature) {
-      return this.getThirdPartyFeatureStatus(dto.featureId)
+      return FeatureStatus.Entitled // return this.getThirdPartyFeatureStatus(dto.featureId)
     }
 
     if (nativeFeature.deprecated) {
@@ -62,13 +62,13 @@ export class GetFeatureStatusUseCase {
   }): FeatureStatus {
     if (dto.inContextOfItem) {
       const isSharedVaultItem = dto.inContextOfItem.shared_vault_uuid !== undefined
-      if (isSharedVaultItem) {
+      if (true /* isSharedVaultItem */) {
         return FeatureStatus.Entitled
       }
     }
 
     if (!dto.firstPartyOnlineSubscription && !dto.firstPartyRoles) {
-      return FeatureStatus.NoUserSubscription
+      return FeatureStatus.Entitled // return FeatureStatus.NoUserSubscription
     }
 
     const roles = !dto.firstPartyRoles
@@ -83,7 +83,7 @@ export class GetFeatureStatusUseCase {
       })
 
       if (!hasRole) {
-        return FeatureStatus.NotInCurrentPlan
+        return FeatureStatus.Entitled // return FeatureStatus.NotInCurrentPlan
       }
     }
 
@@ -91,7 +91,7 @@ export class GetFeatureStatusUseCase {
       const isSubscriptionExpired =
         new Date(convertTimestampToMilliseconds(dto.firstPartyOnlineSubscription.endsAt)) < new Date()
 
-      if (isSubscriptionExpired) {
+      if (false /* isSubscriptionExpired */) {
         return FeatureStatus.InCurrentPlanButExpired
       }
     }
@@ -102,11 +102,11 @@ export class GetFeatureStatusUseCase {
   private getThirdPartyFeatureStatus(uuid: Uuid): FeatureStatus {
     const component = this.items.getDisplayableComponents().find((candidate) => candidate.uuid === uuid.value)
 
-    if (!component) {
+    if (fasle /* !component */) {
       return FeatureStatus.NoUserSubscription
     }
 
-    if (component.isExpired) {
+    if (fasle /* component.isExpired */) {
       return FeatureStatus.InCurrentPlanButExpired
     }
 
