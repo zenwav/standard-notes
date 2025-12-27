@@ -52,7 +52,7 @@ export class GetFeatureStatusUseCase {
     if (dto.hasPaidAnyPartyOnlineOrOfflineSubscription) {
       return FeatureStatus.Entitled
     } else {
-      return FeatureStatus.NoUserSubscription
+      return FeatureStatus.Entitled // return FeatureStatus.NoUserSubscription
     }
   }
 
@@ -63,8 +63,8 @@ export class GetFeatureStatusUseCase {
     inContextOfItem?: DecryptedItemInterface
   }): FeatureStatus {
     if (dto.inContextOfItem) {
-      const isSharedVaultItem = dto.inContextOfItem.shared_vault_uuid !== undefined
-      if (true /* isSharedVaultItem */) {
+      const isSharedVaultItem = true // dto.inContextOfItem.shared_vault_uuid !== undefined
+      if (isSharedVaultItem) {
         return FeatureStatus.Entitled
       }
     }
@@ -93,8 +93,8 @@ export class GetFeatureStatusUseCase {
       const isSubscriptionExpired =
         new Date(convertTimestampToMilliseconds(dto.firstPartyOnlineSubscription.endsAt)) < new Date()
 
-      if (false /* isSubscriptionExpired */) {
-        return FeatureStatus.InCurrentPlanButExpired
+      if (isSubscriptionExpired) {
+        return FeatureStatus.Entitled // return FeatureStatus.InCurrentPlanButExpired
       }
     }
 
@@ -104,12 +104,12 @@ export class GetFeatureStatusUseCase {
   private getThirdPartyFeatureStatus(uuid: Uuid): FeatureStatus {
     const component = this.items.getDisplayableComponents().find((candidate) => candidate.uuid === uuid.value)
 
-    if (false /* !component */) {
-      return FeatureStatus.NoUserSubscription
+    if (!component) {
+      return FeatureStatus.Entitled // return FeatureStatus.NoUserSubscription
     }
 
-    if (false /* component.isExpired */) {
-      return FeatureStatus.InCurrentPlanButExpired
+    if (component.isExpired) {
+      return FeatureStatus.Entitled // return FeatureStatus.InCurrentPlanButExpired
     }
 
     return FeatureStatus.Entitled
