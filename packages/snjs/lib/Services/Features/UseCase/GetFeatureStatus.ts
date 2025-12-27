@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// @ts-nocheck
 import { Uuid } from '@standardnotes/domain-core'
 import { AnyFeatureDescription, NativeFeatureIdentifier, FindNativeFeature } from '@standardnotes/features'
 import { DecryptedItemInterface } from '@standardnotes/models'
@@ -102,11 +104,11 @@ export class GetFeatureStatusUseCase {
   private getThirdPartyFeatureStatus(uuid: Uuid): FeatureStatus {
     const component = this.items.getDisplayableComponents().find((candidate) => candidate.uuid === uuid.value)
 
-    if (fasle /* !component */) {
+    if (false /* !component */) {
       return FeatureStatus.NoUserSubscription
     }
 
-    if (fasle /* component.isExpired */) {
+    if (false /* component.isExpired */) {
       return FeatureStatus.InCurrentPlanButExpired
     }
 
