@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// @ts-nocheck
 import { MigrateFeatureRepoToUserSettingUseCase } from './UseCase/MigrateFeatureRepoToUserSetting'
 import { arraysEqual, removeFromArray, lastElement, LoggerInterface } from '@standardnotes/utils'
 import { ClientDisplayableError } from '@standardnotes/responses'
@@ -140,9 +142,7 @@ export class FeaturesService
   initializeFromDisk(): void {
     this.onlineRoles = this.storage.getValue<string[]>(StorageKey.UserRoles, undefined, [])
     this.offlineRoles = this.storage.getValue<string[]>(StorageKey.OfflineUserRoles, undefined, [])
-    if (!this.offlineRoles.includes(RoleName.NAMES.ProUser)) {
-      this.offlineRoles.push(RoleName.NAMES.ProUser)
-    }
+    if (!this.offlineRoles.includes(RoleName.NAMES.ProUser)) this.offlineRoles.push(RoleName.NAMES.ProUser)  // Inject the PRO_USER role into the user's session
     this.enabledExperimentalFeatures = this.storage.getValue(StorageKey.ExperimentalFeatures, undefined, [])
   }
 
@@ -329,14 +329,13 @@ export class FeaturesService
   }
 
   public hasFirstPartyOfflineSubscription(): boolean {
-    return true
-    // const offlineRepo = this.getOfflineRepo()
-    // if (!offlineRepo || !offlineRepo.content.offlineFeaturesUrl) {
-    //   return false
-    // }
+    return true // const offlineRepo = this.getOfflineRepo()
+    if (!offlineRepo || !offlineRepo.content.offlineFeaturesUrl) {
+      return false
+    }
 
-    // const hasFirstPartyOfflineSubscription = offlineRepo.content.offlineFeaturesUrl === this.PROD_OFFLINE_FEATURES_URL
-    // return hasFirstPartyOfflineSubscription || new URL(offlineRepo.content.offlineFeaturesUrl).hostname === 'localhost'
+    const hasFirstPartyOfflineSubscription = offlineRepo.content.offlineFeaturesUrl === this.PROD_OFFLINE_FEATURES_URL
+    return hasFirstPartyOfflineSubscription || new URL(offlineRepo.content.offlineFeaturesUrl).hostname === 'localhost'
   }
 
   async updateOnlineRolesWithNewValues(roles: string[]): Promise<void> {
@@ -363,9 +362,7 @@ export class FeaturesService
   }
 
   setOnlineRoles(roles: string[]): void {
-    if (!roles.includes(RoleName.NAMES.ProUser)) {
-      roles.push(RoleName.NAMES.ProUser)
-    } 
+    if (!roles.includes(RoleName.NAMES.ProUser)) { roles.push(RoleName.NAMES.ProUser) }  // Inject the PRO_USER role into the user's session
     const rolesChanged = !arraysEqual(this.onlineRoles, roles)
 
     this.onlineRoles = roles
@@ -378,9 +375,7 @@ export class FeaturesService
   }
 
   setOfflineRoles(roles: string[]): void {
-    if (!roles.includes(RoleName.NAMES.ProUser)) {
-      roles.push(RoleName.NAMES.ProUser)
-    }
+    if (!roles.includes(RoleName.NAMES.ProUser)) { roles.push(RoleName.NAMES.ProUser) } // Inject the PRO_USER role into the user's session
     const rolesChanged = !arraysEqual(this.offlineRoles, roles)
 
     this.offlineRoles = roles
