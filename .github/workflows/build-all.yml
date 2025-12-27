@@ -140,8 +140,8 @@ jobs:
           # 1. Fetch Metadata
           echo "Fetching F-Droid metadata..."
           curl -s https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/com.standardnotes.yml -o metadata.yml
-          VERSION=$(grep "CurrentVersion:" metadata.yml | head -n 1 | awk '{print $2}')
-          VERCODE=$(grep "CurrentVersionCode:" metadata.yml | head -n 1 | awk '{print $2}')
+          VERSION=$(grep "CurrentVersion:" metadata.yml | tail -n 1 | awk '{print $2}')
+          VERCODE=$(grep "CurrentVersionCode:" metadata.yml | tail -n 1 | awk '{print $2}')
           echo "FDROID_VERSION=$VERSION" >> $GITHUB_ENV
           echo "FDROID_VERCODE=$VERCODE" >> $GITHUB_ENV
           echo "Using Version: $VERSION ($VERCODE)"
