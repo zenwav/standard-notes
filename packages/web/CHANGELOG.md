@@ -3,6 +3,71 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.201.18](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.17...@standardnotes/web@3.201.18) (2026-02-07)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.17](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.16...@standardnotes/web@3.201.17) (2026-02-07)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.16](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.15...@standardnotes/web@3.201.16) (2026-02-07)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.15](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.14...@standardnotes/web@3.201.15) (2026-02-06)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.14](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.13...@standardnotes/web@3.201.14) (2026-02-06)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.13](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.12...@standardnotes/web@3.201.13) (2026-02-06)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.12](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.11...@standardnotes/web@3.201.12) (2026-02-05)
+
+### Bug Fixes
+
+* Keeps note active even if it's not on the current view when coming from command palette ([#2979](https://github.com/standardnotes/app/issues/2979)) [skip e2e] ([e63be04](https://github.com/standardnotes/app/commit/e63be048f491ecf5d216b50548032b339df33199))
+
+## [3.201.11](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.10...@standardnotes/web@3.201.11) (2026-02-05)
+
+### Bug Fixes
+
+* Add support for hiragana and katakana on Super pdf export ([#2977](https://github.com/standardnotes/app/issues/2977)) ([fafd15e](https://github.com/standardnotes/app/commit/fafd15ec96b3961c4c87004ed59ad84b9209fb83))
+* Adds support for superscript and subscript on Super pdf exports ([#2978](https://github.com/standardnotes/app/issues/2978)) [skip e2e] ([f5a721b](https://github.com/standardnotes/app/commit/f5a721bae0522a2286902b323ee3392964f51295))
+
+## [3.201.10](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.9...@standardnotes/web@3.201.10) (2026-01-27)
+
+### Bug Fixes
+
+* Fixes issue where accessing a note from the command palette when not on the home list view causes view to switch to a different note when syncing ([#2972](https://github.com/standardnotes/app/issues/2972)) ([dd014c8](https://github.com/standardnotes/app/commit/dd014c850868d2294a05c45ca01ff711f3939780))
+* Fixes UI layout regression on Android 14 ([#2971](https://github.com/standardnotes/app/issues/2971)) ([ef56933](https://github.com/standardnotes/app/commit/ef56933667cdc13a9148798babd4ffabdfa012fd))
+
+## [3.201.9](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.8...@standardnotes/web@3.201.9) (2026-01-22)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.8](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.7...@standardnotes/web@3.201.8) (2026-01-16)
+
+**Note:** Version bump only for package @standardnotes/web
+
+## [3.201.7](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.6...@standardnotes/web@3.201.7) (2026-01-08)
+
+### Bug Fixes
+
+* Fixes Cancel button not working on Super export modal ([#2968](https://github.com/standardnotes/app/issues/2968)) [skip e2e] ([0a5cd13](https://github.com/standardnotes/app/commit/0a5cd13a96135a3365a7ed33a484edd4eb3b6105))
+* Fixes wrong header for session note history when offline ([#2967](https://github.com/standardnotes/app/issues/2967)) ([308b98d](https://github.com/standardnotes/app/commit/308b98db3d3308e5254f17efdeb5cdd385781e22))
+
+## [3.201.6](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.5...@standardnotes/web@3.201.6) (2026-01-06)
+
+### Bug Fixes
+
+* Fixes bottom note being hidden behind nav bar on Android ([#2966](https://github.com/standardnotes/app/issues/2966)) ([895353c](https://github.com/standardnotes/app/commit/895353ca7b2c039df26a59224f146c7f04d77f1a))
+
 ## [3.201.5](https://github.com/standardnotes/app/compare/@standardnotes/web@3.201.4...@standardnotes/web@3.201.5) (2025-12-18)
 
 ### Bug Fixes
