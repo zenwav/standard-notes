@@ -279,7 +279,7 @@ jobs:
       
       - name: Build Android Release APK
         working-directory: packages/mobile/android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
