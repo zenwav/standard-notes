@@ -264,12 +264,8 @@ jobs:
           git clone --depth 1 --branch "$NOTIFEE_SRCLIB_REF" "$NOTIFEE_SRCLIB_REPO" "$NOTIFEE_DIR"
 
           pushd "$NOTIFEE_DIR/android"
-          if command -v gradle >/dev/null 2>&1; then
-            gradle --no-daemon publishAarPublicationToMavenRepository
-          else
-            chmod +x ./gradlew
-            ./gradlew --no-daemon publishAarPublicationToMavenRepository
-          fi
+          chmod +x ./gradlew
+          ./gradlew --no-daemon publishAarPublicationToMavenRepository
           popd
 
           rm -rf packages/mobile/node_modules/@notifee/react-native/android/libs
