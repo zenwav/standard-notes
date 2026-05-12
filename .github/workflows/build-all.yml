@@ -121,6 +121,7 @@ jobs:
       run:
         working-directory: packages/mobile
     env:
+      ANDROID_NDK_VERSION: '27.1.12297006'
       ANDROID_KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
       ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -130,6 +131,19 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+
+      - name: Install F-Droid Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsecret-1-dev make g++ libc-dev jq npm bzip2
+          sudo npm install -g yarn
+
+      - name: Install Android NDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ANDROID_NDK_VERSION"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> $GITHUB_ENV
           
       - name: Setup react-native kernel and increase watchers
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
@@ -141,7 +155,7 @@ jobs:
           echo "Cloning F-Droid data..."
           git clone --depth 1 --filter=blob:none --sparse https://gitlab.com/fdroid/fdroiddata.git fdroid_temp
           cd fdroid_temp
-          git sparse-checkout set metadata/com.standardnotes
+          git sparse-checkout set metadata/com.standardnotes srclibs/notifee.yml
           cd ..
           
           # 2. Extract Metadata
@@ -152,6 +166,12 @@ jobs:
           echo "fdroid_version=$VERSION" >> $GITHUB_OUTPUT
           echo "FDROID_VERCODE=$VERCODE" >> $GITHUB_ENV
           echo "Using Version: $VERSION ($VERCODE)"
+
+          NOTIFEE_REPO=$(awk '/^Repo:/{print $2}' fdroid_temp/srclibs/notifee.yml)
+          NOTIFEE_REF=$(grep -E 'notifee@' "$METADATA_FILE" | tail -n 1 | sed -E 's/.*notifee@//')
+          echo "NOTIFEE_SRCLIB_REPO=$NOTIFEE_REPO" >> $GITHUB_ENV
+          echo "NOTIFEE_SRCLIB_REF=$NOTIFEE_REF" >> $GITHUB_ENV
+          echo "Using Notifee source library: $NOTIFEE_REPO ($NOTIFEE_REF)"
 
           # 3. Modify package.json (Remove IAP/Store Review)
           # We are in packages/mobile
@@ -193,7 +213,10 @@ jobs:
           rm -rf "$USER_WORKSPACE/packages/mobile/fdroid_temp"
 
       - name: Install Dependencies
-        run: yarn install --no-immutable
+        working-directory: .
+        run: |
+          yarn config set -H enableImmutableInstalls false
+          npm_config_build_from_source=true yarn
       
       - name: Apply F-Droid Hacks (Sed & Stripping)
         run: |
@@ -228,6 +251,29 @@ jobs:
 
       - name: Build Mobile JS Bundle
         run: yarn build:mobile
+
+      - name: Build F-Droid Notifee Source Library
+        working-directory: .
+        run: |
+          : "${NOTIFEE_SRCLIB_REPO:?Missing Notifee source library repo}"
+          : "${NOTIFEE_SRCLIB_REF:?Missing Notifee source library ref}"
+
+          NOTIFEE_DIR="$RUNNER_TEMP/fdroid-srclibs/notifee"
+          rm -rf "$NOTIFEE_DIR"
+          mkdir -p "$(dirname "$NOTIFEE_DIR")"
+          git clone --depth 1 --branch "$NOTIFEE_SRCLIB_REF" "$NOTIFEE_SRCLIB_REPO" "$NOTIFEE_DIR"
+
+          pushd "$NOTIFEE_DIR/android"
+          if command -v gradle >/dev/null 2>&1; then
+            gradle --no-daemon publishAarPublicationToMavenRepository
+          else
+            chmod +x ./gradlew
+            ./gradlew --no-daemon publishAarPublicationToMavenRepository
+          fi
+          popd
+
+          rm -rf packages/mobile/node_modules/@notifee/react-native/android/libs
+          mv "$NOTIFEE_DIR/packages/react-native/android/libs" packages/mobile/node_modules/@notifee/react-native/android/
 
       - name: Decode Keystore
         run: |
