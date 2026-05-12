@@ -155,7 +155,7 @@ jobs:
           echo "Cloning F-Droid data..."
           git clone --depth 1 --filter=blob:none --sparse https://gitlab.com/fdroid/fdroiddata.git fdroid_temp
           cd fdroid_temp
-          git sparse-checkout set metadata/com.standardnotes srclibs/notifee.yml
+          git sparse-checkout set metadata/com.standardnotes srclibs
           cd ..
           
           # 2. Extract Metadata
