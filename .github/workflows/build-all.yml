@@ -234,7 +234,7 @@ jobs:
           # Remove GMS and update versions
           sed -i -e '/gms/d' -e "s/versionName appVersionName/versionName \"$VERSION\"/" -e "s/versionCode appVersionCode/versionCode $VERCODE/" build.gradle
           # Restrict native libs to arm64-v8a only (drops ~20MB from the APK)
-          sed -i -e "/missingDimensionStrategy/a\\        ndk { abiFilters 'arm64-v8a' }" build.gradle
+          sed -i "s/missingDimensionStrategy.*/&\n        ndk { abiFilters 'arm64-v8a' }/" build.gradle
           
           echo "Removing Fido2Api..."
           rm -f src/main/java/com/standardnotes/Fido2Api*.java
