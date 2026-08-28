@@ -5,6 +5,7 @@ import { PremiumFeatureIconClass, PremiumFeatureIconName } from '@/Components/Ic
 import { classNames } from '@standardnotes/snjs'
 import { requestCloseAllOpenModalsAndPopovers } from '@/Utils/CloseOpenModalsAndPopovers'
 import {
+  AppName,
   AuthenticatorName,
   ChecklistEditorName,
   jtString,
@@ -97,16 +98,16 @@ export const UpgradePrompt = ({
         >
           {featureNameBold && (
             <span>
-              {jtString(
-                c('B7.FilesSubscriptionHelp.Subscription.Info')
-                  .jt`To take advantage of ${featureNameBold} and other advanced features, upgrade your current plan.`,
-              )}
+              {c('B7.FilesSubscriptionHelp.Subscription.Info')
+                .jt`To take advantage of ${featureNameBold} and other advanced features, upgrade your current plan.`}
             </span>
           )}
           {!featureNameBold && (
             <span>
-              {c('B7.FilesSubscriptionHelp.Subscription.Info')
-                .t`To take advantage of all the advanced features Standard Notes has to offer, upgrade your current plan.`}
+              {jtString(
+                c('B7.FilesSubscriptionHelp.Subscription.Info')
+                  .jt`To take advantage of all the advanced features ${AppName} has to offer, upgrade your current plan.`,
+              )}
             </span>
           )}
           {application.isNativeIOS() && (

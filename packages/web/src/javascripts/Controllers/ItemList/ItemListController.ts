@@ -1,6 +1,6 @@
 import { ListableContentItem } from '@/Components/ContentListView/Types/ListableContentItem'
 import { debounce, destroyAllObjectProperties, isMobileScreen } from '@/Utils'
-import { c } from 'ttag'
+import { c, msgid } from 'ttag'
 import {
   ApplicationEvent,
   CollectionSort,
@@ -80,7 +80,7 @@ export class ItemListController
   items: ListableContentItem[] = []
   notesToDisplay = 0
   pageSize = 0
-  panelTitle = 'Notes'
+  panelTitle = c('B4.Notes.TagsLinkedItems.Label').t`Notes`
   renderedItems: ListableContentItem[] = []
   searchSubmitted = false
   showDisplayOptionsMenu = false
@@ -230,6 +230,8 @@ export class ItemListController
           this.searchOptionsController.includeProtectedContents,
           this.searchOptionsController.includeArchived,
           this.searchOptionsController.includeTrashed,
+          this.searchOptionsController.noteTitleOnly,
+          this.searchOptionsController.tagFilterList.map((tag) => tag.uuid).join(','),
         ],
         () => {
           this.reloadNotesDisplayOptions()
@@ -413,17 +415,23 @@ export class ItemListController
   }
 
   get isFiltering(): boolean {
-    return !!this.noteFilterText && this.noteFilterText.length > 0
+    return this.noteFilterText.length > 0 || this.searchOptionsController.tagFilterList.length > 0
   }
 
   reloadPanelTitle = () => {
-    let title = this.panelTitle
+    let title = c('B4.Notes.TagsLinkedItems.Label').t`Notes`
 
     if (this.isFiltering) {
       const resultCount = this.items.length
-      title = `${resultCount} search results`
+      title = jtString(
+        c('B3.Notes.NoteList.Info').ngettext(
+          msgid`${resultCount} search result`,
+          `${resultCount} search results`,
+          resultCount,
+        ),
+      )
     } else if (this.navigationController.selected) {
-      title = `${this.navigationController.selected.title}`
+      title = this.navigationController.selected.title
     }
 
     this.panelTitle = title
@@ -621,7 +629,7 @@ export class ItemListController
     const tag = this.navigationController.selected
 
     const searchText = this.noteFilterText.toLowerCase()
-    const isSearching = searchText.length
+    const isSearching = searchText.length > 0 || this.searchOptionsController.tagFilterList.length > 0
     let includeArchived: boolean
     let includeTrashed: boolean
 
@@ -633,10 +641,15 @@ export class ItemListController
       includeTrashed = this.displayOptions.includeTrashed ?? false
     }
 
+    const tags: SNTag[] = []
+    if (tag instanceof SNTag) {
+      tags.push(tag)
+    }
+
     const criteria: NotesAndFilesDisplayControllerOptions = {
       sortBy: this.displayOptions.sortBy,
       sortDirection: this.displayOptions.sortDirection,
-      tags: tag instanceof SNTag ? [tag] : [],
+      tags,
       views: tag instanceof SmartView ? [tag] : [],
       includeArchived,
       includeTrashed,
@@ -645,6 +658,11 @@ export class ItemListController
       searchQuery: {
         query: searchText,
         includeProtectedNoteText: this.searchOptionsController.includeProtectedContents,
+        noteTitleOnly: this.searchOptionsController.noteTitleOnly,
+        tagFilters:
+          this.searchOptionsController.tagFilterList.length > 0
+            ? this.searchOptionsController.tagFilterList
+            : undefined,
       },
     }
 

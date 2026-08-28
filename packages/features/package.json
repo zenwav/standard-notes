@@ -1,12 +1,16 @@
 {
   "name": "@standardnotes/features",
-  "version": "1.61.3",
+  "version": "1.61.5",
   "engines": {
     "node": ">=16.0.0 <17.0.0"
   },
   "description": "Features SDK for Standard Notes projects",
   "main": "dist/index.js",
   "author": "Standard Notes.",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/standardnotes/app"
+  },
   "types": "dist/index.d.ts",
   "files": [
     "dist"
