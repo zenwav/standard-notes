@@ -1,7 +1,7 @@
 {
   "name": "@standardnotes/desktop",
   "main": "./app/dist/index.js",
-  "version": "3.110.201",
+  "version": "3.110.207",
   "license": "AGPL-3.0",
   "author": "Standard Notes.",
   "private": true,
@@ -69,7 +69,7 @@
     "ava": "^5.1.0",
     "babel-loader": "^9.1.0",
     "copy-webpack-plugin": "^11.0.0",
-    "electron-builder": "^24.9.1",
+    "electron-builder": "^26.15.7",
     "eslint": "*",
     "eslint-config-prettier": "^8.9.0",
     "eslint-plugin-import": "^2.26.0",
@@ -83,7 +83,7 @@
     "terser-webpack-plugin": "^5.3.6",
     "ts-loader": "^9.4.1",
     "ts-node": "^10.9.1",
-    "typescript": "*",
+    "typescript": "5.8.3",
     "webpack": "*",
     "webpack-merge": "*"
   },
@@ -123,21 +123,14 @@
         "zip"
       ]
     },
-    "win": {
-      "certificateSubjectName": "Standard Notes Ltd.",
-      "publisherName": "Standard Notes Ltd.",
-      "signDlls": true,
-      "sign": "./scripts/windowsSign.js"
-    },
-    "nsis": {
-      "deleteAppDataOnUninstall": true
-    },
     "linux": {
       "category": "Office",
       "icon": "build/icon/",
       "executableName": "standard-notes",
       "desktop": {
-        "StartupWMClass": "standard notes"
+        "entry": {
+          "StartupWMClass": "standard notes"
+        }
       },
       "target": [
         "AppImage",

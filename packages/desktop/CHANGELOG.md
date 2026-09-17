@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.110.207](https://github.com/standardnotes/app/compare/@standardnotes/desktop@3.202.6...@standardnotes/desktop@3.110.207) (2026-09-17)
+
+**Note:** Version bump only for package @standardnotes/desktop
+
+## [3.110.206](https://github.com/standardnotes/app/compare/@standardnotes/desktop@3.202.5...@standardnotes/desktop@3.110.206) (2026-09-16)
+
+**Note:** Version bump only for package @standardnotes/desktop
+
+## [3.110.205](https://github.com/standardnotes/app/compare/@standardnotes/desktop@3.202.4...@standardnotes/desktop@3.110.205) (2026-09-15)
+
+### Bug Fixes
+
+* Fixes potential tag path transversal in plaintext backups ([#3048](https://github.com/standardnotes/app/issues/3048)) ([cd90a59](https://github.com/standardnotes/app/commit/cd90a59559d8257065d0e022f7afc02fc78beb41))
+
+## [3.110.204](https://github.com/standardnotes/app/compare/@standardnotes/desktop@3.202.3...@standardnotes/desktop@3.110.204) (2026-09-07)
+
+**Note:** Version bump only for package @standardnotes/desktop
+
+## [3.110.203](https://github.com/standardnotes/app/compare/@standardnotes/desktop@3.202.2...@standardnotes/desktop@3.110.203) (2026-09-04)
+
+**Note:** Version bump only for package @standardnotes/desktop
+
+## [3.110.202](https://github.com/standardnotes/app/compare/@standardnotes/desktop@3.202.1...@standardnotes/desktop@3.110.202) (2026-09-03)
+
+**Note:** Version bump only for package @standardnotes/desktop
+
 ## [3.110.201](https://github.com/standardnotes/app/compare/@standardnotes/desktop@3.202.0...@standardnotes/desktop@3.110.201) (2026-08-25)
 
 ### Bug Fixes

@@ -1,5 +1,5 @@
 import { isDesktopApplication } from '@/Utils'
-import { STRING_FAILED_TO_UPDATE_USER_SETTING } from '@/Constants/Strings'
+import { StringFailedToUpdateUserSetting } from '@/Constants/Strings'
 import { useCallback, useEffect, useState } from 'react'
 import { WebApplication } from '@/Application/WebApplication'
 import { observer } from 'mobx-react-lite'
@@ -61,8 +61,8 @@ const EmailBackups = ({ application }: Props) => {
     try {
       await application.settings.updateSetting(settingName, payload, false)
       return true
-    } catch (e) {
-      application.alerts.alert(STRING_FAILED_TO_UPDATE_USER_SETTING()).catch(console.error)
+    } catch {
+      application.alerts.alert(StringFailedToUpdateUserSetting()).catch(console.error)
       return false
     }
   }
