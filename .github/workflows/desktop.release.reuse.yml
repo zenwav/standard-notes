@@ -6,6 +6,11 @@ on:
       channel:
         required: true
         type: string
+      skip_release:
+        description: Run build and publish prep only; skip GitHub release and Snap store upload
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   Mac:
@@ -42,8 +47,11 @@ jobs:
         run: |
           yarn run electron-builder --mac --x64 --publish=never --c.extraMetadata.version=${{ env.APP_VERSION }}
           node scripts/fixMacZip.js ${{ env.APP_VERSION }}
+          mkdir -p dist/update-meta && cp dist/latest-mac.yml dist/update-meta/mac-x64.yml
       - name: MacArm64
-        run: yarn run electron-builder --mac --arm64 --publish=never --c.extraMetadata.version=${{ env.APP_VERSION }}
+        run: |
+          yarn run electron-builder --mac --arm64 --publish=never --c.extraMetadata.version=${{ env.APP_VERSION }}
+          mkdir -p dist/update-meta && cp dist/latest-mac.yml dist/update-meta/mac-arm64.yml
 
       - name: Upload
         uses: actions/upload-artifact@v4.0.0
@@ -55,6 +63,7 @@ jobs:
             packages/desktop/dist/*.blockmap
             packages/desktop/dist/*.yml
             packages/desktop/dist/*.yaml
+            packages/desktop/dist/update-meta/**
 
   Linux-AppImage-X64:
     name: Linux AppImage X64
@@ -91,6 +100,7 @@ jobs:
       - name: AppImageX64
         run: |
           yarn run electron-builder --linux --x64 -c.linux.target=AppImage --publish=never --c.extraMetadata.version=${{ env.APP_VERSION }}
+          mkdir -p dist/update-meta && cp dist/latest-linux.yml dist/update-meta/linux-appimage-x64.yml
 
       - name: Upload
         uses: actions/upload-artifact@v4.0.0
@@ -100,6 +110,7 @@ jobs:
             packages/desktop/dist/*.AppImage
             packages/desktop/dist/*.yml
             packages/desktop/dist/*.yaml
+            packages/desktop/dist/update-meta/**
 
   Linux-AppImage-ARM64:
     name: Linux AppImage ARM64
@@ -136,6 +147,7 @@ jobs:
       - name: AppImageArm64
         run: |
           yarn run electron-builder --linux --arm64 -c.linux.target=AppImage --publish=never --c.extraMetadata.version=${{ env.APP_VERSION }}
+          mkdir -p dist/update-meta && cp dist/latest-linux-arm64.yml dist/update-meta/linux-appimage-arm64.yml
 
       - name: Upload
         uses: actions/upload-artifact@v4.0.0
@@ -145,6 +157,7 @@ jobs:
             packages/desktop/dist/*.AppImage
             packages/desktop/dist/*.yml
             packages/desktop/dist/*.yaml
+            packages/desktop/dist/update-meta/**
 
   Linux-Dir-X64:
     name: Linux Dir X64
@@ -247,6 +260,7 @@ jobs:
         run: |
           yarn run webpack --config desktop.webpack.prod.js --env deb
           yarn run electron-builder --linux --x64 -c.linux.target=deb --publish=never --c.extraMetadata.version=${{ env.APP_VERSION }}
+          mkdir -p dist/update-meta && cp dist/latest-linux.yml dist/update-meta/linux-deb-x64.yml
 
       - name: Upload
         uses: actions/upload-artifact@v4.0.0
@@ -256,6 +270,7 @@ jobs:
             packages/desktop/dist/*.deb
             packages/desktop/dist/*.yml
             packages/desktop/dist/*.yaml
+            packages/desktop/dist/update-meta/**
 
   Linux-Deb-ARM64:
     name: Linux Deb ARM64
@@ -292,6 +307,7 @@ jobs:
         run: |
           yarn run webpack --config desktop.webpack.prod.js --env deb
           yarn run electron-builder --linux --arm64 -c.linux.target=deb --publish=never --c.extraMetadata.version=${{ env.APP_VERSION }}
+          mkdir -p dist/update-meta && cp dist/latest-linux-arm64.yml dist/update-meta/linux-deb-arm64.yml
 
       - name: Upload
         uses: actions/upload-artifact@v4.0.0
@@ -301,6 +317,7 @@ jobs:
             packages/desktop/dist/*.deb
             packages/desktop/dist/*.yml
             packages/desktop/dist/*.yaml
+            packages/desktop/dist/update-meta/**
 
   Linux-Snap:
     name: Linux Snap
@@ -397,6 +414,9 @@ jobs:
       - name: Generate Checksums
         run: node scripts/sums.mjs
 
+      - name: Merge update manifests
+        run: node scripts/merge-update-manifests.mjs
+
       - name: Generate Release Notes
         uses: ./actions/release-notes
         with:
@@ -404,6 +424,7 @@ jobs:
         id: release-notes
 
       - name: Release
+        if: ${{ !inputs.skip_release }}
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.CI_PAT_TOKEN }}
@@ -415,6 +436,16 @@ jobs:
           files: packages/desktop/dist/*
 
       - name: Publish Snap
+        if: ${{ !inputs.skip_release }}
         run: |
           sudo snap install snapcraft --classic --channel=8.x/stable
           snapcraft upload dist/standard-notes-${{ env.APP_VERSION }}-linux-amd64.snap --release stable,candidate,beta,edge
+
+      - name: Upload publish output (dry run)
+        if: inputs.skip_release
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-publish-dry-run-${{ env.APP_VERSION }}
+          retention-days: 7
+          # Same flat layout as GitHub release (dist/*); no unpacked build subdirs or update-meta fragments
+          path: packages/desktop/dist/*

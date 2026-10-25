@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.212.7](https://github.com/standardnotes/app/compare/@standardnotes/snjs@2.212.6...@standardnotes/snjs@2.212.7) (2026-10-23)
+
+### Bug Fixes
+
+* Improves errors on file attachments for expired subs ([#3069](https://github.com/standardnotes/app/issues/3069)) ([7f9b07f](https://github.com/standardnotes/app/commit/7f9b07f9f88ae8885874fdb77425c883e4a41132))
+
+## [2.212.6](https://github.com/standardnotes/app/compare/@standardnotes/snjs@2.212.5...@standardnotes/snjs@2.212.6) (2026-10-17)
+
+### Bug Fixes
+
+* Theme selection not updating colors correctly on some editors ([#3064](https://github.com/standardnotes/app/issues/3064)) ([ba00979](https://github.com/standardnotes/app/commit/ba00979d977dbe925909ae0f1e5b33ad3a67ca33))
+
+## [2.212.5](https://github.com/standardnotes/app/compare/@standardnotes/snjs@2.212.4...@standardnotes/snjs@2.212.5) (2026-10-08)
+
+**Note:** Version bump only for package @standardnotes/snjs
+
 ## [2.212.4](https://github.com/standardnotes/app/compare/@standardnotes/snjs@2.212.3...@standardnotes/snjs@2.212.4) (2026-09-15)
 
 **Note:** Version bump only for package @standardnotes/snjs

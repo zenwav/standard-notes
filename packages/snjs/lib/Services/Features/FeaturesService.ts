@@ -252,7 +252,7 @@ export class FeaturesService
 
       return this.downloadOfflineRoles(offlineRepo)
     } catch (err) {
-      return new ClientDisplayableError(`${API_MESSAGE_FAILED_OFFLINE_ACTIVATION}, ${JSON.stringify(err)}`)
+      return new ClientDisplayableError(`${API_MESSAGE_FAILED_OFFLINE_ACTIVATION()}, ${JSON.stringify(err)}`)
     }
   }
 
@@ -286,7 +286,7 @@ export class FeaturesService
         subscriptionId,
       }
     } catch {
-      return new ClientDisplayableError(API_MESSAGE_FAILED_OFFLINE_ACTIVATION)
+      return new ClientDisplayableError(API_MESSAGE_FAILED_OFFLINE_ACTIVATION())
     }
   }
 
